@@ -1,66 +1,74 @@
 <!doctype html>
 <html lang="ko">
   <head>
+  	<meta charset="UTF-8">
+  	<meta name="viewpoint" content="width=device-width,
+  	initial-scale=1.0">
+  	<meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title> Bridging </title>
+    <link rel="stylesheet" href="style.css">
+    <script src="./bundle.js"></script>  
+
   </head>
   <body>
-    <script src="./bundle.js"></script>
-	    
-	  <!-- The Modal -->
-	  <div id="launchModal" class="modal">
-	    <!-- Modal content -->
-	    <div class="modal-content">
-	      <div class="modal-header">
-	        <span id="close-modal">&times;</span>
-	        <h2>Hey there!</h2>
-	      </div>
-	      <div class="modal-body">
-	        <p>This project is an experiment that uses Tensorflow.js and your webcam to make Amazon Echo respond to sign language. It began with a simple question:</p> 
-	        <p><b><em>"If voice is the future of computing what about those who cannot hear or speak?"</em></b></p>
-	        <p>You can find the code for this demo on <a href="https://github.com/shekit/alexa-sign-language-translator" target="_blank">github</a> or watch a <a href="https://www.youtube.com/watch?v=kS53y6GWm0w" target="_blank">video</a> of it in action.</p>
-	        <p style="font-size:12px;"><em>Note: This demo runs entirely in your browser without any data sent to any server</em></p>
-	      </div>
-	    </div>
-	  </div>
 
-	  <video id="video" src='' muted autoplay playsinline></video>
-	  <div class="split-left">
-	    <div class="centered">
-	      <h1 id="text" class="intro-steps">Step 1: Enter Words<br><span class="subtext">Add a few words below. In the next step we'll associate each word with signs from the webcam</h1>
-	      <div id="training-list">
-	        <div id="example-list"></div>
-	        <div id="add">
-	          <form id="add-word" autocomplete="off">
-	            <input type="text" id="new-word" placeholder="Add Training word">
-	            <br/><br/>
-	            <label>
-	              <input type="checkbox" id="is-terminal-word">
-	              Is terminal word?
-	            </label>
-	            <br/><br/>
-	            <input type="submit" value="Add Word">
-	            <p><b>Terminal Word</b> - A word that appears as the last word in your query</p>
-	            <p>e.g If you intend to ask "What's <b><em>the weather</em></b>?" & "What's <b><em>the time</em></b>?" then <b><em>the weather</em></b> and <b><em>the time</em></b> are terminal words whereas <b><em>what's</em></b> is not</p>
-	          </form>
-	        </div>
-	        <p id="count">Training: 2 words</p>
-	        <div id="action-btn"></div>
-	      </div>
-	      
-	    </div>
-	  </div>
-	  <div class="split-right">
-	    <div class="centered">
-	      <div id="loader"></div>
-	      <h1>
-	        <span id="answerText"></span>
-	        <span id="interimText"></span>
-	      </h1>
-	    </div>
-	  </div>
-	  
-	  
-	  
+  <!-- The Modal -->
+  <div id="launchModal" class="modal">
+    <!-- Modal content -->
+    <div class="modal-content">
+      <div class="modal-header">
+        <span id="close-modal">&times;</span>
+        <h2>어서오세요 :) </h2>
+      </div>
+      <div class="modal-body">
+        <p>헤이 클로바, 헤이 카카오! 오늘 날씨가 뭐야? 인공지능 비서들은 점점 똑똑해졌지만, 아직 우리의 '목소리'밖에 알아듣지 못합니다. 그렇다면, 말을 하지 못하거나, 듣지 못하는 분들은 사용할 수 없는 건가요?</p> 
+        <p><b>"목소리 대신, 우리의 움직임으로 인공지능과 대화할 수 없을까?"</b></p>
+        <p>라는 간단한 질문으로 시작한 프로젝트입니다. <a href="https://github.com/shekit/alexa-sign-language-translator" target="_blank">Abhishek Singh 의 프로젝트</a> 에서 감명받아 우리나라의 인공지능들과도 대화할 수 있도록 만들어 봤습니다.</p>
+        <p style="font-size:12px;"><em>웹캠등 페이지 내의 모든 데이터는 외부 서버에 전송되지 않고, 브라우저 내에서만 사용되므로 안심하세요 :) </em></p>
+      </div>
+    </div>
+  </div>
+
+  <div id="status">
+    <p id="status-text">준비중</p>
+  </div>
+  <video id="video" src='' muted autoplay playsinline></video>
+  <div class="split-left">
+    <div class="centered">
+      <h1 id="text" class="intro-steps">1 단계: 단어 <br> 입력하기<br><span class="subtext">사용할 단어를 입력해주세요! 다음 단계에서는 웹캠으로 단어와 모션을 연결 할 것입니다.</h1>
+      <div id="training-list">
+        <div id="example-list"></div>
+        <div id="add">
+          <form id="add-word" autocomplete="off">
+            <input type="text" id="new-word" placeholder="새로운 단어 입력">
+            <br/><br/>
+            <label>
+              <input type="checkbox" id="is-terminal-word">
+              맺음말인가요? 
+            </label>
+            <br/><br/>
+            <input type="submit" value="단어 입력하기">
+            <p><b>맺음말</b> - 명령어를 말 할 때 마지막에 들어가는 말</p>
+            <p> 예시: "오늘 날씨 어때?" 에서 <b><em>"어때?"</em></b> "치킨 배달해줘" 에서 <b><em> "배달해줘"</em></b> 등</p>
+          </form>
+        </div>
+        <p id="count">입력한 단어: 2개</p>
+        <div id="action-btn"></div>
+      </div>
+      
+    </div>
+  </div>
+  <div class="split-right">
+    <div class="centered">
+      <div id="loader"></div>
+      <h1>
+        <span id="answerText"></span>
+        <span id="interimText"></span>
+      </h1>
+    </div>
+  </div>
+  
+  
 
   </body>
 </html>

@@ -1,7 +1,7 @@
 {
   "name": "Bridging",
   "version": "1.0.0",
-  "description": "Personal project to bridge the communication gap",
+  "description": "",
   "private": true,
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -18,10 +18,6 @@
     "url": "https://github.com/Hyunjulie/Bridging/issues"
   },
   "homepage": "https://github.com/Hyunjulie/Bridging#readme",
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
   "devDependencies": {
     "css-loader": "^1.0.1",
     "file-loader": "^2.0.0",
@@ -31,6 +27,10 @@
     "webpack-cli": "^3.1.2"
   },
   "dependencies": {
+    "@tensorflow-models/posenet": "^0.2.3",
+    "@tensorflow/tfjs": "^0.13.4",
+    "deeplearn": "^0.5.1",
+    "deeplearn-knn-image-classifier": "^0.4.2",
     "lodash": "^4.17.11"
   }
 }
