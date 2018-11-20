@@ -1,5 +1,12 @@
-import {KNNImageClassifier} from 'deeplearn-knn-image-classifier';
+import * as tf from '@tensorflow/tfjs';
 import * as dl from 'deeplearn';
+import * as knnClassifier from '@tensorflow-models/knn-classifier';
+// import * as posenet from '@tensorflow-models/posenet';
+
+//Posenet parameters 
+// const imageScaleFactor = 0.5;
+// const outputStride = 16;
+// const flipHorizontal = false;
 
 // Webcam Image size. Must be 227. 
 const IMAGE_SIZE = 227;
@@ -166,6 +173,7 @@ class Main {
           )
       }
     })
+    console.log('createPredictBtn complete')
   }
 
   createTrainingBtn(){
@@ -203,7 +211,7 @@ class Main {
       this.addWordForm.appendChild(p)
       
       this.loadKNN()
-
+      console.log("LoadingKNN complete")
       this.createPredictBtn()
 
       this.textLine.innerText = "2 단계: 학습시키기"
@@ -212,6 +220,7 @@ class Main {
       subtext.innerHTML = "<br/>단어와 모션을 연결할 시간입니다!" 
       subtext.classList.add('subtext')
       this.textLine.appendChild(subtext)
+      console.log('Appending subtext complete')
     })
   }
 
@@ -241,10 +250,14 @@ class Main {
   }
 
   loadKNN(){
-    this.knn = new KNNImageClassifier(words.length, TOPK);
-    // Load knn model
-    this.knn.load()
-    .then(() => this.startTraining()); 
+    this.knn = knnClassifier.create();
+//Going to create posenet here  see : https://github.com/tensorflow/tfjs-models/blob/master/knn-classifier/demo/camera.js
+    // Load knn -> starttraining (this.timer = requestAnimationFrame(this.train.bind(this))) --> 
+    // if this videois playing -> image = tf.fromPixels(this.video) --> Train class if one of the buttons is held down 
+    // add current image to the classifier --> 
+
+    this.animate();
+//    this.knn.create().then(() => this.startTraining());
   }
 
   updateExampleCount(){
@@ -293,7 +306,7 @@ class Main {
       button.addEventListener('mousedown', () => this.training = i);
       button.addEventListener('mouseup', () => this.training = -1);
 
-      // Create clear button to emove training examples
+      // Create clear button to remove training examples
       const btn = document.createElement('button')
       btn.innerText = "예시 지우기"//`Clear ${words[i].toUpperCase()}`
       div.appendChild(btn);
@@ -311,11 +324,14 @@ class Main {
       this.infoTexts.push(infoText);
     }
   }
-  
-  startTraining(){
-    if (this.timer) {
-      this.stopTraining();
-    }
+
+  stopTraining(){
+    this.video.pause();
+    cancelAnimationFrame(this.animate);
+  }
+
+
+  animate(){
     var promise = this.video.play();
 
     if(promise !== undefined){
@@ -325,23 +341,15 @@ class Main {
         console.log("Autoplay prevented")
       })
     }
-    this.timer = requestAnimationFrame(this.train.bind(this));
-  }
-  
-  stopTraining(){
-    this.video.pause();
-    cancelAnimationFrame(this.timer);
-  }
-  
-  train(){
+
     if(this.videoPlaying){
       // Get image data from video element
-      const image = dl.fromPixels(this.video);
+      const image = tf.fromPixels(this.video);
       
       // Train class if one of the buttons is held down
       if(this.training != -1){
         // Add current image to classifier
-        this.knn.addImage(image, this.training)
+        this.knn.addExample(image, this.training)
       }
 
       const exampleCount = this.knn.getClassExampleCount()
@@ -354,12 +362,16 @@ class Main {
         }
       }
     }
-    this.timer = requestAnimationFrame(this.train.bind(this));
+    image.dispose();
+    requestAnimationFrame(this.animate);
+
   }
+
+
 
   startPredicting(){
     // stop training
-    if(this.timer){
+    if(requestAnimationFrame(this.animate)){
       this.stopTraining();
     }
 
@@ -368,7 +380,7 @@ class Main {
 
     this.video.play();
 
-    this.pred = requestAnimationFrame(this.predict.bind(this))
+    this.pred = requestAnimationFrame(this.predict())
   }
 
   pausePredicting(){
@@ -388,10 +400,10 @@ class Main {
       if(this.videoPlaying){
         const exampleCount = this.knn.getClassExampleCount();
 
-        const image = dl.fromPixels(this.video);
+        const image = tf.fromPixels(this.video);
 
         if(Math.max(...exampleCount) > 0){
-          this.knn.predictClass(image)
+          this.knn.predictClass(image, k = TOPK)
           .then((res) => {
             for(let i=0;i<words.length;i++){
 
@@ -433,12 +445,13 @@ class TextToSpeech{
     this.synth = window.speechSynthesis
     this.voices = []
     this.pitch = 1.0
-    this.rate = 0.9
+    this.rate = 1.0
 
     this.textLine = document.getElementById("text")
     this.ansText = document.getElementById("answerText")
     this.loader = document.getElementById("loader")
 
+    this.lang = 'ko-KR'
     this.selectedVoice = 48 // this is Google-US en. Can set voice and language of choice
 
     this.currentPredictedWords = []
@@ -458,11 +471,11 @@ class TextToSpeech{
     }
     this.voices = this.synth.getVoices()
 
-    if(this.voices.indexOf(this.selectedVoice) > 0){
-      console.log(`${this.voices[this.selectedVoice].name}:${this.voices[this.selectedVoice].lang}`)
-    } else {
-      //alert("Selected voice for speech did not load or does not exist.\nCheck Internet Connection")
-    }
+    // if(this.voices.indexOf(this.selectedVoice) > 0){
+    //   console.log(`${this.voices[this.selectedVoice].name}:${this.voices[this.selectedVoice].lang}`)
+    // } else {
+    //   //alert("Selected voice for speech did not load or does not exist.\nCheck Internet Connection")
+    // }
     
   }
 
@@ -499,24 +512,15 @@ class TextToSpeech{
       return
     }
 
-    // if(endWords.includes(word) && this.currentPredictedWords.length == 1 && (word != "hello" && word != "bye")){
-    //   console.log("end word detected early")
-    //   console.log(word)
-    //   return;
-    // }
-
     if(this.currentPredictedWords.includes(word)){
       // prevent word from being detected repeatedly in phrase
       console.log("word already been detected in current phrase")
       return
     }
 
-
     this.currentPredictedWords.push(word)
 
-
     this.textLine.innerText += ' ' + word;
-
 
     var utterThis = new SpeechSynthesisUtterance(word)
 
@@ -535,7 +539,9 @@ class TextToSpeech{
       console.log("Error speaking")
     }
 
-    utterThis.voice = this.voices[this.selectedVoice]
+    // utterThis.voice = this.voices[this.selectedVoice]
+    //새로 바꾼거: 
+    utterThis.lang = 'ko-KR'
 
     utterThis.pitch = this.pitch
     utterThis.rate = this.rate
@@ -560,7 +566,7 @@ class SpeechToText{
     this.recognition.continuous = true;
     this.recognition.interimResults = true;
 
-    this.recognition.lang = 'en-US'
+    this.recognition.lang = 'ko-KR'
 
     this.cutOffTime = 15000 // cut off speech to text after
 
