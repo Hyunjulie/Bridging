@@ -1,12 +1,5 @@
-import * as tf from '@tensorflow/tfjs';
+import {KNNImageClassifier} from 'deeplearn-knn-image-classifier';
 import * as dl from 'deeplearn';
-import * as knnClassifier from '@tensorflow-models/knn-classifier';
-// import * as posenet from '@tensorflow-models/posenet';
-
-//Posenet parameters 
-// const imageScaleFactor = 0.5;
-// const outputStride = 16;
-// const flipHorizontal = false;
 
 // Webcam Image size. Must be 227. 
 const IMAGE_SIZE = 227;
@@ -27,7 +20,7 @@ var endWords = ["안녕"]
 
 class LaunchModal {
   constructor(){
-  	// x 를 누루면 modal 없어지게 하기
+    // x 를 누루면 modal 없어지게 하기
     this.modalWindow = document.getElementById('launchModal')
     this.closeBtn = document.getElementById('close-modal')
     this.closeBtn.addEventListener('click', (e) => {
@@ -89,7 +82,7 @@ class Main {
       let checkbox = document.getElementById("is-terminal-word")
 
       if(word && !words.includes(word)){
-      	// 맺는말이 아니면 : 단어 array 의 뒤에서 2번째에 더하기
+        // 맺는말이 아니면 : 단어 array 의 뒤에서 2번째에 더하기
         words.splice(words.length-1,0,word) 
         this.createButtonList(false)
         this.updateExampleCount()
@@ -173,7 +166,6 @@ class Main {
           )
       }
     })
-    console.log('createPredictBtn complete')
   }
 
   createTrainingBtn(){
@@ -211,7 +203,7 @@ class Main {
       this.addWordForm.appendChild(p)
       
       this.loadKNN()
-      console.log("LoadingKNN complete")
+
       this.createPredictBtn()
 
       this.textLine.innerText = "2 단계: 학습시키기"
@@ -220,7 +212,6 @@ class Main {
       subtext.innerHTML = "<br/>단어와 모션을 연결할 시간입니다!" 
       subtext.classList.add('subtext')
       this.textLine.appendChild(subtext)
-      console.log('Appending subtext complete')
     })
   }
 
@@ -250,14 +241,10 @@ class Main {
   }
 
   loadKNN(){
-    this.knn = knnClassifier.create();
-//Going to create posenet here  see : https://github.com/tensorflow/tfjs-models/blob/master/knn-classifier/demo/camera.js
-    // Load knn -> starttraining (this.timer = requestAnimationFrame(this.train.bind(this))) --> 
-    // if this videois playing -> image = tf.fromPixels(this.video) --> Train class if one of the buttons is held down 
-    // add current image to the classifier --> 
-
-    this.animate();
-//    this.knn.create().then(() => this.startTraining());
+    this.knn = new KNNImageClassifier(words.length, TOPK);
+    // Load knn model
+    this.knn.load()
+    .then(() => this.startTraining()); 
   }
 
   updateExampleCount(){
@@ -306,7 +293,7 @@ class Main {
       button.addEventListener('mousedown', () => this.training = i);
       button.addEventListener('mouseup', () => this.training = -1);
 
-      // Create clear button to remove training examples
+      // Create clear button to emove training examples
       const btn = document.createElement('button')
       btn.innerText = "예시 지우기"//`Clear ${words[i].toUpperCase()}`
       div.appendChild(btn);
@@ -324,14 +311,11 @@ class Main {
       this.infoTexts.push(infoText);
     }
   }
-
-  stopTraining(){
-    this.video.pause();
-    cancelAnimationFrame(this.animate);
-  }
-
-
-  animate(){
+  
+  startTraining(){
+    if (this.timer) {
+      this.stopTraining();
+    }
     var promise = this.video.play();
 
     if(promise !== undefined){
@@ -341,15 +325,23 @@ class Main {
         console.log("Autoplay prevented")
       })
     }
-
+    this.timer = requestAnimationFrame(this.train.bind(this));
+  }
+  
+  stopTraining(){
+    this.video.pause();
+    cancelAnimationFrame(this.timer);
+  }
+  
+  train(){
     if(this.videoPlaying){
       // Get image data from video element
-      const image = tf.fromPixels(this.video);
+      const image = dl.fromPixels(this.video);
       
       // Train class if one of the buttons is held down
       if(this.training != -1){
         // Add current image to classifier
-        this.knn.addExample(image, this.training)
+        this.knn.addImage(image, this.training)
       }
 
       const exampleCount = this.knn.getClassExampleCount()
@@ -362,16 +354,12 @@ class Main {
         }
       }
     }
-    image.dispose();
-    requestAnimationFrame(this.animate);
-
+    this.timer = requestAnimationFrame(this.train.bind(this));
   }
-
-
-
+https://github.com/google/emoji-scavenger-hunt/blob/c6dbb72a05c8c95669dacd047c17e75721403007/src/js/game.ts
   startPredicting(){
     // stop training
-    if(requestAnimationFrame(this.animate)){
+    if(this.timer){
       this.stopTraining();
     }
 
@@ -380,7 +368,7 @@ class Main {
 
     this.video.play();
 
-    this.pred = requestAnimationFrame(this.predict())
+    this.pred = requestAnimationFrame(this.predict.bind(this))
   }
 
   pausePredicting(){
@@ -400,10 +388,10 @@ class Main {
       if(this.videoPlaying){
         const exampleCount = this.knn.getClassExampleCount();
 
-        const image = tf.fromPixels(this.video);
+        const image = dl.fromPixels(this.video);
 
         if(Math.max(...exampleCount) > 0){
-          this.knn.predictClass(image, k = TOPK)
+          this.knn.predictClass(image)
           .then((res) => {
             for(let i=0;i<words.length;i++){
 
@@ -486,7 +474,7 @@ class TextToSpeech{
       this.loader.style.display = "block"
     } else {
       this.loader.style.display = "none"
-      this.ansText.innerText = "No query detected"
+      this.ansText.innerText = "아무것도 감지되지 않았습니다."
       main.previousPrediction = -1
     }
     this.currentPredictedWords = []

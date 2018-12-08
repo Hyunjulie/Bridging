@@ -28,6 +28,7 @@
   },
   "dependencies": {
     "@tensorflow-models/knn-classifier": "^0.2.2",
+    "@tensorflow-models/mobilenet": "^0.2.2",
     "@tensorflow-models/posenet": "^0.2.3",
     "@tensorflow/tfjs": "^0.12.7",
     "deeplearn": "^0.5.0",
